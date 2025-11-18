@@ -102,14 +102,14 @@ export const logger = {
   },
 };
 
-export async function diff(range: string, dir: PortablePath, opts: Array<string>): Promise<string> {
+export async function diff(range: string, dir: PortablePath): Promise<string> {
   const patch = await spawn(`git`, [
     `diff`,
     `--no-index`,
-    `--diff-algorithm=default`,
+    `--abbrev=4`,
+    `--diff-algorithm=minimal`,
     `--src-prefix=a/`,
     `--dst-prefix=b/`,
-    ...opts,
     `base`,
     `patched`,
   ], {
@@ -142,9 +142,6 @@ export async function diff(range: string, dir: PortablePath, opts: Array<string>
 export abstract class PatchGenerator<S extends {id: string, range: string}> {
   protected readonly tmp: PortablePath;
   protected readonly patches: PortablePath;
-
-  // Only used to minimize patch changes when migrating to new system
-  protected diffOpts: Array<string> = [];
 
   public constructor(
     public readonly name: string,
@@ -211,7 +208,7 @@ export abstract class PatchGenerator<S extends {id: string, range: string}> {
         return await logger.section(`Generate diff`, () => {
           logger.log(`--- ${npath.fromPortablePath(base)}`);
           logger.log(`+++ ${npath.fromPortablePath(patched)}`);
-          return diff(slice.range, buildPath, this.diffOpts);
+          return diff(slice.range, buildPath);
         });
       }
     });
